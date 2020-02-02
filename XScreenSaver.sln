@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.29306.81
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "XScreenSaver", "XScreenSaver\XScreenSaver.csproj", "{EA714931-9071-4E43-8FCE-4E233B28E36D}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{EA714931-9071-4E43-8FCE-4E233B28E36D}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{EA714931-9071-4E43-8FCE-4E233B28E36D}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{EA714931-9071-4E43-8FCE-4E233B28E36D}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{EA714931-9071-4E43-8FCE-4E233B28E36D}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {593A7254-CC23-4759-B0CF-EA9B6DDC7E2B}
+	EndGlobalSection
+EndGlobal
