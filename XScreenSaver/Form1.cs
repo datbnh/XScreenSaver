@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Drawing.Drawing2D;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -22,20 +23,24 @@ namespace XScreenSaver
 
             timer1.Enabled = true;
             timer1.Interval = 1000;
+
+            timer2.Enabled = true;
+
             odd = true;
-            g = CreateGraphics();
+            panel1.Size = new Size(Bounds.Width, Bounds.Height);
+            g = panel1.CreateGraphics();
             g.Clear(Color.Green);
-            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAliasGridFit;
+            g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
             font = new Font(new FontFamily("Segoe UI Light"), size, FontStyle.Regular, GraphicsUnit.Pixel);
             dateFont = new Font(new FontFamily("Segoe UI Light"), dateSize, FontStyle.Regular, GraphicsUnit.Pixel);
+
             InitFigureSize();
             InitDelimiterSize();
             InitFigureOffsets();
+            UpdateDate();
 
-            var clockWidth = figureOffsets.Last() + figureSize.Width;
-            var clockHeight = figureSize.Height;
-            clockTopLeftPoint.X = (Bounds.Width - clockWidth) / 2;
-            clockTopLeftPoint.Y = (Bounds.Height - clockHeight - dateFont.Height) / 2;
+            clockWidth = figureOffsets.Last() + figureSize.Width;
+            clockHeight = figureSize.Height;
         }
 
         public Point InitialPosition { get; }
@@ -62,14 +67,35 @@ namespace XScreenSaver
 
         private int dateWidth;
         private int dateHeight;
+        private int clockWidth;
+        private int clockHeight;
 
-        private Point clockTopLeftPoint;
-        private Point dateTopLeftPoint;
+        private int totalWidth { get { return Math.Max(dateWidth, clockWidth); } }
+        private int totalHeight { get { return dateHeight + clockHeight; } }
+
+        private Point clockTopLeftPoint { get { return new Point((Bounds.Width - clockWidth) / 2, (Bounds.Height - totalHeight) / 2); } }
+
+        private Point dateTopLeftPoint { get { return new Point((Bounds.Width - dateWidth) / 2, clockTopLeftPoint.Y + clockHeight); } }
+
+
+        private int maxOffsetX { get { return (Bounds.Width - totalWidth) / 2; } }
+        private int maxOffsetY { get { return (Bounds.Height - totalHeight) / 2; } }
+
+        private int velocityX = 1;
+        private int velocityY = 1;
+
+        private int currentOffsetX = 0;
+        private int currentOffsetY = 0;
 
         private Brush backgroundBrush = Brushes.Black;
 
 
         private void Form1_MouseMove(object sender, MouseEventArgs e)
+        {
+            MousedMoved();
+        }
+
+        private void MousedMoved()
         {
             if ((Math.Abs(Cursor.Position.X - InitialPosition.X) > X_THRESHOLD) ||
                     (Math.Abs(Cursor.Position.Y - InitialPosition.Y) > Y_THRESHOLD))
@@ -78,15 +104,20 @@ namespace XScreenSaver
 
         private void Timer1_Tick(object sender, EventArgs e)
         {
+            DrawTime(false);
+        }
+
+        private void DrawTime(bool updateAllDigits)
+        {
             var currentTime = DateTime.Now;
 
-            UpdateSecond(currentTime);
-            if (currentTime.Second == 0)
+            UpdateSecond(currentTime, updateAllDigits);
+            if (currentTime.Second == 0 || updateAllDigits)
             {
-                UpdateMinute(currentTime);
-                if (currentTime.Minute == 0)
+                UpdateMinute(currentTime, updateAllDigits);
+                if (currentTime.Minute == 0 || updateAllDigits)
                 {
-                    UpdateHour(currentTime);
+                    UpdateHour(currentTime, updateAllDigits);
                     if (currentTime.Hour == 0)
                         UpdateDate();
                 }
@@ -104,13 +135,13 @@ namespace XScreenSaver
             odd = !odd;
         }
 
-        private void UpdateSecond(DateTime time)
+        private void UpdateSecond(DateTime time, bool updateAllDigits)
         {
             if (!isDisplaySecond)
                 return;
 
             Point location = clockTopLeftPoint;
-            if (time.Second % 10 == 0)
+            if (time.Second % 10 == 0 || updateAllDigits)
             {
                 location.X = clockTopLeftPoint.X + figureOffsets[6];
                 ClearFigure(location);
@@ -129,10 +160,10 @@ namespace XScreenSaver
             g.FillRectangle(backgroundBrush, location.X, location.Y, figureSize.Width, figureSize.Height);
         }
 
-        private void UpdateHour(DateTime time)
+        private void UpdateHour(DateTime time, bool updateAllDigits)
         {
             Point location = clockTopLeftPoint;
-            if (time.Hour % 10 == 0)
+            if (time.Hour % 10 == 0 || updateAllDigits)
             {
                 location.X = clockTopLeftPoint.X + figureOffsets[0];
                 ClearFigure(location);
@@ -146,10 +177,10 @@ namespace XScreenSaver
                 new Rectangle(location, figureSize));
         }
 
-        private void UpdateMinute(DateTime time)
+        private void UpdateMinute(DateTime time, bool updateAllDigits)
         {
             Point location = clockTopLeftPoint;
-            if (time.Minute % 10 == 0)
+            if (time.Minute % 10 == 0 || updateAllDigits)
             {
                 location.X = clockTopLeftPoint.X + figureOffsets[3];
                 ClearFigure(location);
@@ -191,38 +222,12 @@ namespace XScreenSaver
 
         private void Form1_Shown(object sender, EventArgs e)
         {
-            var time = DateTime.Now;
-
-            DrawTextNoPaddingAtCentre(g, time.Hour / 10 + "", font,
-                new Rectangle(new Point(clockTopLeftPoint.X + figureOffsets[0], clockTopLeftPoint.Y), figureSize));
-            DrawTextNoPaddingAtCentre(g, time.Hour % 10 + "", font,
-                new Rectangle(new Point(clockTopLeftPoint.X + figureOffsets[1], clockTopLeftPoint.Y), figureSize));
-            DrawTextNoPaddingAtCentre(g, ".", font,
-                new Rectangle(new Point(clockTopLeftPoint.X + figureOffsets[2], clockTopLeftPoint.Y), delimSize));
-            DrawTextNoPaddingAtCentre(g, time.Minute / 10 + "", font,
-                new Rectangle(new Point(clockTopLeftPoint.X + figureOffsets[3], clockTopLeftPoint.Y), figureSize));
-            DrawTextNoPaddingAtCentre(g, time.Minute % 10 + "", font,
-                new Rectangle(new Point(clockTopLeftPoint.X + figureOffsets[4], clockTopLeftPoint.Y), figureSize));
-            if (isDisplaySecond)
-            {
-                DrawTextNoPaddingAtCentre(g, ".", font,
-                    new Rectangle(new Point(clockTopLeftPoint.X + figureOffsets[5], clockTopLeftPoint.Y), delimSize));
-                DrawTextNoPaddingAtCentre(g, time.Second / 10 + "", font,
-                    new Rectangle(new Point(clockTopLeftPoint.X + figureOffsets[6], clockTopLeftPoint.Y), figureSize));
-                DrawTextNoPaddingAtCentre(g, time.Second % 10 + "", font,
-                    new Rectangle(new Point(clockTopLeftPoint.X + figureOffsets[7], clockTopLeftPoint.Y), figureSize));
-            }
-
-
-            
+            DrawTime(true);
             UpdateDate();
         }
 
         private void UpdateDate()
         {
-            g.FillRectangle(backgroundBrush,
-                            dateTopLeftPoint.X, dateTopLeftPoint.Y, dateWidth, dateHeight);
-
             var size = TextRenderer.MeasureText(g, DateTime.Today.ToString(dateFormatter),
                                     dateFont, new Size(dateFont.Height, dateFont.Height),
                                     TextFormatFlags.Default);
@@ -230,8 +235,11 @@ namespace XScreenSaver
             dateWidth = size.Width;
             dateHeight = size.Height;
 
-            dateTopLeftPoint.X = (Bounds.Width - dateWidth) / 2;
-            dateTopLeftPoint.Y = clockTopLeftPoint.Y + figureSize.Height;
+            g.FillRectangle(backgroundBrush,
+                            dateTopLeftPoint.X, dateTopLeftPoint.Y, dateWidth, dateHeight);
+
+            //dateTopLeftPoint.X = (Bounds.Width - dateWidth) / 2;
+            //dateTopLeftPoint.Y = clockTopLeftPoint.Y + figureSize.Height;
 
             TextRenderer.DrawText(g, DateTime.Today.ToString(dateFormatter), dateFont,
                       dateTopLeftPoint,
@@ -256,7 +264,7 @@ namespace XScreenSaver
 
         private void InitDelimiterSize()
         {
-            string[] delimiters = {"." };
+            string[] delimiters = { "." };
 
             int maxW = 0;
             int maxH = 0;
@@ -294,16 +302,33 @@ namespace XScreenSaver
         }
         private void DrawTextNoPadding(Graphics graphics, string text, Font font, Point location)
         {
-            Size size = GetTextSizeNoPadding(graphics, text, font);
-
+            //Size size = GetTextSizeNoPadding(graphics, text, font);
             //graphics.FillRectangle(Brushes.Black, new Rectangle(location, size));
             //graphics.DrawRectangle(Pens.Red, new Rectangle(location, size));
+            TextRenderer.DrawText(graphics, text, font, location, Color.White, TextFormatFlags.NoPadding);
+        }
 
-            TextRenderer.DrawText(graphics, text, font,
-                                  location,
-                                  Color.White,
-                                  TextFormatFlags.NoPadding);
+        private void timer2_Tick(object sender, EventArgs e)
+        {
+            if (currentOffsetX < -maxOffsetX && velocityX < 0)
+                velocityX = -velocityX;
+            if (currentOffsetX > maxOffsetX && velocityX > 0)
+                velocityX = -velocityX;
 
+            if (currentOffsetY < -maxOffsetY && velocityY < 0)
+                velocityY = -velocityY;
+            if (currentOffsetY > maxOffsetY && velocityY > 0)
+                velocityY = -velocityY;
+
+            currentOffsetX += velocityX;
+            currentOffsetY += velocityY;
+
+            panel1.Location = new Point(currentOffsetX, currentOffsetY);
+        }
+
+        private void panel1_MouseMove(object sender, MouseEventArgs e)
+        {
+            MousedMoved();
         }
     }
 }
