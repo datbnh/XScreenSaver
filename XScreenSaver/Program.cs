@@ -28,6 +28,7 @@ namespace XScreenSaver
                 }
                 else if (firstArgument == "/c") // configure screen saver
                 {
+
                 }
             }
             else // no argument passed, show screen saver
@@ -47,6 +48,10 @@ namespace XScreenSaver
                 Form1 screensaver = new Form1(screen);
                 screensaver.Show();
                 Application.Run(screensaver);
+                //Settings settings = new Settings();
+                //settings.Show();
+                //Application.Run(settings);
+
             }
         }
 

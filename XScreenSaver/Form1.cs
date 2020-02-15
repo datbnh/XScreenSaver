@@ -31,6 +31,9 @@ namespace XScreenSaver
             g = panel1.CreateGraphics();
             g.Clear(Color.Green);
             g.TextRenderingHint = System.Drawing.Text.TextRenderingHint.AntiAlias;
+            g.CompositingQuality = CompositingQuality.HighQuality;
+            //g.InterpolationMode = InterpolationMode.HighQualityBicubic;
+            g.SmoothingMode = SmoothingMode.HighQuality;
             font = new Font(new FontFamily("Segoe UI Light"), size, FontStyle.Regular, GraphicsUnit.Pixel);
             dateFont = new Font(new FontFamily("Segoe UI Light"), dateSize, FontStyle.Regular, GraphicsUnit.Pixel);
 
@@ -41,7 +44,14 @@ namespace XScreenSaver
 
             clockWidth = figureOffsets.Last() + figureSize.Width;
             clockHeight = figureSize.Height;
+
+            centre.X = Bounds.Width / 2;
+            centre.Y = Bounds.Height / 2;
+
+            analogueClock = new AnalogueClock(288);
         }
+
+        private AnalogueClock analogueClock;
 
         public Point InitialPosition { get; }
         public static readonly int X_THRESHOLD = 20;
@@ -59,7 +69,9 @@ namespace XScreenSaver
         private Size figureSize;
         private Size delimSize;
 
-        private bool isDisplaySecond = false;
+        private Point centre;
+
+        private bool isDisplaySecond = true;
         private string timeFormatter => isDisplaySecond ? "HH:mm:ss" : "HH:mm";
         private string dateFormatter = "dddd, d MMMM, yyyy";
 
@@ -104,13 +116,16 @@ namespace XScreenSaver
 
         private void Timer1_Tick(object sender, EventArgs e)
         {
-            DrawTime(false);
+            DrawTime(false);            
         }
 
         private void DrawTime(bool updateAllDigits)
         {
+            //g.Clear(Color.Black);
+
             var currentTime = DateTime.Now;
 
+            /*
             UpdateSecond(currentTime, updateAllDigits);
             if (currentTime.Second == 0 || updateAllDigits)
             {
@@ -132,7 +147,13 @@ namespace XScreenSaver
                 g.FillRectangle(backgroundBrush, clockTopLeftPoint.X + figureOffsets[5], clockTopLeftPoint.Y, delimSize.Width, delimSize.Height);
                 DrawTextNoPaddingAtCentre(g, odd ? "." : "", font, new Rectangle(new Point(clockTopLeftPoint.X + figureOffsets[5], clockTopLeftPoint.Y), delimSize));
             }
-            odd = !odd;
+            odd = !odd; */
+
+            g.TranslateTransform(Bounds.Width / 2, Bounds.Height / 2);
+
+            AnalogueClockRenderer.Render(g, analogueClock, currentTime);
+            
+            g.TranslateTransform(-Bounds.Width / 2, -Bounds.Height / 2);
         }
 
         private void UpdateSecond(DateTime time, bool updateAllDigits)
